@@ -1,0 +1,6 @@
+pyyaml
+asciimatics
+tabulate
+plantuml
+six
+click

@@ -1,0 +1,90 @@
+title: TermSlides Example
+
+Headers:
+  notes: This page has ending animation "scroll"
+  # duration: -1
+  endAnimation: scroll
+  content:
+    - type: figlet
+      content: TermSlides
+      font: roman
+      colour: green
+      y: 2
+    - type: figlet
+      content: Terminal Slides Show
+      font: standard
+      colour: red
+      y: 12
+    - type: figlet
+      content: Enjoy the show!
+      font: small
+      y: 20
+
+Diagram:
+  notes: This page has diagram, starting animation "scroll" and ending animation "matrix"
+  # duration: 0
+  startAnimation: scroll
+  endAnimation: matrix
+  content:
+    - type: uml
+      content: |
+        title This is a diagram rendered by "PlantUML"
+
+        Alice->Bob: Authentication Request
+        note right of Bob: Bob thinks about it
+        Bob->Alice: Authentication Response
+      colour: green
+      y: 2
+    - type: text
+      content: This is rainbox colour text with typing effect
+      animation: typing
+      afterStart: true
+      colour: rainbow
+      y: 20
+      x: 2
+
+Table_and_Star:
+  notes: This page has table and stars
+  # duration: -1
+  startAnimation: scroll
+  endAnimation: scroll
+  stars: 200
+  content:
+    - type: text
+      content: The is a table rendered by "tabulate"
+      colour: green
+      attr: bold
+      y: 2
+    - type: table
+      content:
+        - [Name, Age, Height, Weight]
+        - [Alice, 24, 168.123, 52.123]
+        - [Bob, 25, 179.123, 78.123]
+      hasHeader: true
+      tablefmt: fancy_grid
+      # numalign: right
+      floatfmt: [_, _, .1f, .2f]
+      colour: green
+      y: 4
+    - type: text
+      content: This is default style text with mirage effect
+      animation: mirage
+      afterStart: true
+      y: 22
+
+Figlet_and_Snow:
+  notes: This page has shining "figlet" and snow
+  # duration: -1
+  startAnimation: scroll
+  snow: true
+  content:
+    - type: figlet
+      content: ASCIIMATICS
+      font: big
+      colour: cycle
+      y: 4
+    - type: figlet
+      content: ROCKS!
+      font: roman
+      colour: cycle
+      y: 14
