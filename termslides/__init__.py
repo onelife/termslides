@@ -22,4 +22,4 @@ while True:
 __setup = stack.f_globals.get('__file__') and (path.basename(stack.f_globals.get('__file__')) == 'setup.py')
 
 if not __setup:
-    from .termslides import *
+    from .termslides import termslides
