@@ -4,7 +4,7 @@ import sys
 from types import MethodType
 
 import yaml
-from asciimatics.exceptions import NextScene, ResizeScreenError
+from asciimatics.exceptions import NextScene, ResizeScreenError, StopApplication
 from asciimatics.effects import Stars, Snow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
