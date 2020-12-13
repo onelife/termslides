@@ -6,11 +6,12 @@ from asciimatics.constants import (
     A_BOLD, A_NORMAL, A_REVERSE, A_UNDERLINE,
 )
 from asciimatics.effects import Cycle, Print, Stars, Snow, Mirage
-from asciimatics.renderers import FigletText, Rainbow
+from asciimatics.renderers import FigletText, Rainbow, Fire
 from asciimatics.widgets import Frame, Layout, Widget, ListBox, TextBox, PopUpDialog
 from asciimatics.event import KeyboardEvent
 from asciimatics.screen import Screen
 from asciimatics.exceptions import NextScene, StopApplication
+from pyfiglet import Figlet
 
 from termslides.effects import Typing, ScrollSlide, MatrixSlide
 from termslides.renderers import NormalText, UMLText, TableText
@@ -81,8 +82,7 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
         elif type_ in ['table']:
             item['data'] = content
         if _required_param_map[type_].intersection(item.keys()) != _required_param_map[type_]:
-            raise InvalidParameter(
-                f'{type_}: require {_required_param_map[type_].difference(item.keys())}')
+            raise InvalidParameter(f'{type_}: require {_required_param_map[type_].difference(item.keys())}')
 
         # optional param
         # - afterStart: default is False
@@ -95,12 +95,20 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
         y = int(item.get('y', screen.height / 2))
 
         # check conflict
-        if colour == 'cycle' and animation in ['typing', 'mirage']:
-            raise InvalidParameter(
-                f"'{colour}' and '{animation}' can't be used together")
+        if animation in ['typing', 'mirage'] and colour == 'cycle':
+            raise InvalidParameter(f"'{animation}' and '{colour}' can't be used together")
+        elif animation == 'fire' and type_ != 'figlet':
+            raise InvalidParameter(f"'{animation}' only works with 'figlet'")
 
         # get render
-        render = _type_map[type_](**{k: item[k] for k in _param_map[type_] if k in item})
+        if animation == 'fire':
+            text_ = Figlet(font=item['font'], width=200).renderText(item['text'])
+            text_h = len(text_.split('\n'))
+            fire_h = int(text_h * 2.5)
+            fire_w = max([len(x) for x in text_.split('\n')])
+            render = Fire(fire_h, fire_w, text_, 0.3, 45, screen.colours)
+        else:
+            render = _type_map[type_](**{k: item[k] for k in _param_map[type_] if k in item})
 
         # modify "start_frame" and "y"
         start_frame = 0
@@ -126,7 +134,25 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
             attr = _attr_map[item.get('attr', 'normal')]
             bg = _colour_map[item.get('bg', 'black')]
 
-            if animation == 'mirage':
+            if animation == 'fire':
+                effect = Print(screen, render,
+                               y - (fire_h - text_h), x,
+                               speed=1, transparent=False,
+                               start_frame=start_frame)
+                effects.append(effect)
+                effect = Print(screen, FigletText(item['text'], item['font']),
+                               y, x=(x if x is not None else (screen.width - fire_w) // 2) + 1,
+                               colour=Screen.COLOUR_BLACK, bg=Screen.COLOUR_BLACK,
+                               speed=1,
+                               start_frame=start_frame)
+                effects.append(effect)
+                effect = Print(screen,
+                               FigletText(item['text'], item['font']),
+                               y, x,
+                               colour=colour, bg=colour,
+                               speed=1,
+                               start_frame=start_frame)
+            elif animation == 'mirage':
                 duration = 30
                 effect = Mirage(screen, render, y, colour,
                                 start_frame=start_frame,

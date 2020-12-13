@@ -5,7 +5,7 @@ from os import path
 
 __author__ = 'onelife'
 __license__ = "Apache-2.0"
-__version__ = '1.01'
+__version__ = '1.02'
 
 __setup = False
 __depth = 1
@@ -22,4 +22,4 @@ while True:
 __setup = stack.f_globals.get('__file__') and (path.basename(stack.f_globals.get('__file__')) == 'setup.py')
 
 if not __setup:
-    from .termslides import termslides
+    from .termslides import *

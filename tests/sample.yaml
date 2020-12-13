@@ -88,3 +88,18 @@ Figlet_and_Snow:
       font: roman
       colour: cycle
       y: 14
+
+Fire:
+  notes: This page has "figlet" with "fire" effect
+  content:
+    - type: text
+      content: The following text is on fire
+      animation: typing
+      colour: red
+      font: standard
+      y: 2
+    - type: figlet
+      content: TermSlides
+      animation: fire
+      font: banner
+      y: 20
