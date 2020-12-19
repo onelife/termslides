@@ -95,7 +95,7 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
         y = int(item.get('y', screen.height / 2))
 
         # check conflict
-        if animation in ['typing', 'mirage'] and colour == 'cycle':
+        if animation in ['typing', 'mirage', 'fire'] and colour == 'cycle':
             raise InvalidParameter(f"'{animation}' and '{colour}' can't be used together")
         elif animation == 'fire' and type_ != 'figlet':
             raise InvalidParameter(f"'{animation}' only works with 'figlet'")
