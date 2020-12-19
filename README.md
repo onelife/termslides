@@ -1,5 +1,5 @@
 # TermSlides
-Script your slides in a YAML file and show it in terminal.
+Script your slides in YAML file and show it in terminal.
 
 ## Install
 `pip install termslides`

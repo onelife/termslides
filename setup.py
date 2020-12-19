@@ -16,7 +16,9 @@ with open('requirements.txt', encoding='utf-8') as f:
 setup(
     name='termslides',
     version=termslides.__version__,
-    description=long_description,
+    description='Script your slides in YAML file and show it in terminal.',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     packages=find_packages(),
     install_requires=install_requires,
 
