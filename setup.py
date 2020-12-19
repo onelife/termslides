@@ -23,7 +23,7 @@ setup(
     install_requires=install_requires,
 
     author='onelife',
-    author_email='onelife.real[AT]gmail.com',
+    author_email='onelife.real@gmail.com',
     license=termslides.__license__,
     url='https://github.com/onelife/termslides',
     download_url='https://github.com/onelife/termslides/archive/%s.tar.gz' % termslides.__version__,
