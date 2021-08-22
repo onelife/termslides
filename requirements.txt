@@ -1,6 +1,6 @@
-pyyaml
-asciimatics
-tabulate
-plantuml
-six
-click
+pyyaml == 5.*
+asciimatics == 1.*
+tabulate == 0.*
+plantuml == 0.*
+tqdm == 4.*
+click == 7.*

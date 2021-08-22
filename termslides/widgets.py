@@ -1,19 +1,22 @@
 # -*- coding: utf-8 -*-
 
+from random import randint
+
 from asciimatics.constants import (
     COLOUR_BLACK, COLOUR_RED, COLOUR_GREEN, COLOUR_YELLOW,
     COLOUR_BLUE, COLOUR_MAGENTA, COLOUR_CYAN, COLOUR_WHITE,
     A_BOLD, A_NORMAL, A_REVERSE, A_UNDERLINE,
 )
-from asciimatics.effects import Cycle, Print, Stars, Snow, Mirage
-from asciimatics.renderers import FigletText, Rainbow, Fire
+from asciimatics.effects import Cycle, Print, RandomNoise, Stars, Snow
+from asciimatics.particles import Explosion, StarFirework, Rain
+from asciimatics.renderers import FigletText, Rainbow, Fire, ColourImageFile, ImageFile, Box
 from asciimatics.widgets import Frame, Layout, Widget, ListBox, TextBox, PopUpDialog
 from asciimatics.event import KeyboardEvent
 from asciimatics.screen import Screen
 from asciimatics.exceptions import NextScene, StopApplication
 from pyfiglet import Figlet
 
-from termslides.effects import Typing, ScrollSlide, MatrixSlide
+from termslides.effects import Mirage, Typing, ScrollSlide, MatrixSlide, WipeSlide, DropSlide, ShootSlide
 from termslides.renderers import NormalText, UMLText, TableText
 
 
@@ -22,6 +25,9 @@ _type_map = {
     'text': NormalText,
     'uml': UMLText,
     'table': TableText,
+    'color-image': ColourImageFile,
+    'image': ImageFile,
+    'box': Box,
     None: None
 }
 
@@ -30,6 +36,9 @@ _required_param_map = {
     'text': set(['text']),
     'uml': set(['text']),
     'table': set(['data']),
+    'color-image': set(['screen', 'uni', 'dither', 'filename']),
+    'image': set(['filename']),
+    'box': set(['width', 'height']),
 }
 
 _param_map = {
@@ -37,6 +46,9 @@ _param_map = {
     'text': set(['text']),
     'uml': set(['text']),
     'table': set(['data', 'hasHeader', 'tablefmt', 'numalign', 'floatfmt']),
+    'color-image': set(['screen', 'uni', 'dither', 'filename', 'height']),
+    'image': set(['filename', 'height', 'colours']),
+    'box': set(['width', 'height']),
 }
 
 _colour_map = {
@@ -60,14 +72,15 @@ _attr_map = {
 }
 
 _valid_start = [None, 'scroll']
-_valid_end = [None, 'scroll', 'matrix']
+_valid_end = [None, 'scroll', 'matrix', 'shoot', 'drop', 'wipe']
+_valid_page = [None, 'stars', 'snow', 'explosion', 'fireworks', 'rain']
 
 
 class InvalidParameter(Exception):
     pass
 
 
-def _get_effects(screen, content, start_animation=None, end_animation=None, next_fn=None):
+def _get_effects(screen, content, start_animation=None, end_animation=None, page_animation=None, next_fn=None):
     effects = []
     for item in content:
         # get type and required param
@@ -81,6 +94,16 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
             item['text'] = content
         elif type_ in ['table']:
             item['data'] = content
+        elif type_ in ['color-image']:
+            item['filename'] = content
+            item['screen'] = screen
+            item['uni'] = screen.unicode_aware
+            item['dither'] = screen.unicode_aware
+        elif type_ in ['image']:
+            item['filename'] = content
+            item['colours'] = screen.colours
+        elif type_ in ['box']:
+            item['uni'] = screen.unicode_aware
         if _required_param_map[type_].intersection(item.keys()) != _required_param_map[type_]:
             raise InvalidParameter(f'{type_}: require {_required_param_map[type_].difference(item.keys())}')
 
@@ -93,11 +116,12 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
         animation = item.get('animation', None)
         colour = _colour_map[item.get('colour', 'white')]
         y = int(item.get('y', screen.height / 2))
+        delay = int(item.get('delay', 0))
 
         # check conflict
         if animation in ['typing', 'mirage', 'fire'] and colour == 'cycle':
             raise InvalidParameter(f"'{animation}' and '{colour}' can't be used together")
-        elif animation == 'fire' and type_ != 'figlet':
+        elif animation in ['fire', 'noise'] and type_ != 'figlet':
             raise InvalidParameter(f"'{animation}' only works with 'figlet'")
 
         # get render
@@ -115,7 +139,8 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
         if start_animation == 'scroll':
             y += screen.height
             if afterStart:
-                start_frame = screen.height
+                start_frame += screen.height
+        start_frame += delay
 
         # get effect
         if colour == 'cycle':
@@ -154,13 +179,15 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
                                start_frame=start_frame)
             elif animation == 'mirage':
                 duration = 30
-                effect = Mirage(screen, render, y, colour,
+                effect = Mirage(screen, render, y, x if type_ in ['text', 'uml'] else None, colour,
                                 start_frame=start_frame,
                                 stop_frame=start_frame + duration)
                 effects.append(effect)
                 effect = Print(screen, render, y, x, colour, attr, bg,
                                start_frame=start_frame + duration,
                                stop_frame=start_frame + duration + 10)
+            elif animation == 'noise':
+                effect = RandomNoise(screen, render)
             else:
                 if animation == 'typing':
                     effect_ = Typing
@@ -170,17 +197,57 @@ def _get_effects(screen, content, start_animation=None, end_animation=None, next
                                  attr, bg, start_frame=start_frame)
         effects.append(effect)
 
-    # starting / ending animation
+    # starting / ending / page animation
     if start_animation == 'scroll':
         effects.append(ScrollSlide(screen, start_frame=0))
     elif start_animation == 'matrix':
         effects.append(MatrixSlide(screen, start_frame=0))
+
     if end_animation:
         last_frame = max([effect.stop_frame for effect in effects])
+        for effect in effects:
+            if not effect.stop_frame:
+                effect._stop_frame = max(last_frame, start_frame + 1)
+
         if end_animation == 'scroll':
-            effects.append(ScrollSlide(screen, is_ending=True, next_fn=next_fn, start_frame=last_frame))
+            effects.append(ScrollSlide(screen, is_ending=True, next_fn=next_fn, start_frame=last_frame + 1))
         elif end_animation == 'matrix':
-            effects.append(MatrixSlide(screen, is_ending=True, next_fn=next_fn, start_frame=last_frame))
+            effects.append(MatrixSlide(screen, is_ending=True, next_fn=next_fn, start_frame=last_frame + 1))
+        elif end_animation == 'shoot':
+            y_offset = screen.height if start_animation == 'scroll' else 0
+            effects.append(ShootSlide(screen, y_offset=y_offset, start_frame=last_frame + 1))
+        elif end_animation == 'drop':
+            effects.append(DropSlide(screen, start_frame=last_frame + 1))
+        elif end_animation == 'wipe':
+            effects.append(WipeSlide(screen, start_frame=last_frame + 1))
+
+    if page_animation:
+        if page_animation == 'stars':
+            effects.insert(0, Stars(screen, 200))
+        elif page_animation == 'snow':
+            effects.insert(0, Snow(screen))
+        elif page_animation == 'rain':
+            effects.insert(0, Rain(screen, 2000))
+        elif page_animation == 'fireworks':
+            start_frame = screen.height if start_animation == 'scroll' else 0
+            y_offset = screen.height if start_animation == 'scroll' else 0
+            for _ in range(200):
+                effects.insert(0, StarFirework(
+                    screen,
+                    randint(3, screen.width - 4),
+                    randint(1, y_offset + screen.height - 2),
+                    randint(20, 30),
+                    start_frame=randint(start_frame, 2000)))
+        elif page_animation == 'explosion':
+            start_frame = screen.height if start_animation == 'scroll' else 0
+            y_offset = screen.height if start_animation == 'scroll' else 0
+            for _ in range(200):
+                effects.insert(0, Explosion(
+                    screen,
+                    randint(3, screen.width - 4),
+                    randint(1, y_offset + screen.height - 2),
+                    randint(20, 30),
+                    start_frame=randint(start_frame, 2000)))
 
     return effects
 
@@ -281,24 +348,18 @@ class SlideView(Frame):
         content = slide.get('content', None)
         if content is None:
             raise InvalidParameter(f"Page {name} no 'content'")
-        # get starting / ending animation
+        # get starting / ending / page animation
         start = slide.get('startAnimation', None)
         if start not in _valid_start:
             raise InvalidParameter(f'Invalid starting animation: {start}')
         end = slide.get('endAnimation', None)
         if end not in _valid_end:
             raise InvalidParameter(f'Invalid ending animation: {end}')
+        page = slide.get('pageAnimation', None)
+        if page not in _valid_page:
+            raise InvalidParameter(f'Invalid page animation: {page}')
         # get slide effects
-        effects = _get_effects(
-            self._canvas, content, start, end, lambda: self.show_slide(name))
-        # get slide animation
-        stars = slide.get('stars', None)
-        if stars:
-            effects.insert(0, Stars(self._canvas, stars))
-        snow = slide.get('snow', False)
-        if snow:
-            effects.insert(0, Snow(self._canvas))
-
+        effects = _get_effects(self._canvas, content, start, end, page, lambda: self.show_slide(name))
         # add effects
         for effect in effects:
             effect.reset()
@@ -367,6 +428,8 @@ class ListView(Frame):
         if self._list_view.value is None:
             self._list_view.value = 0
         name = self._list_view.options[self._list_view.value][0]
+        self._canvas._screen._frame = 0
+        self._canvas._screen._idle_frame_count = 0
         self._slide_view.show_slide(name)
         self._notes_view.show_notes(name)
         self._title_view.title = name

@@ -2,6 +2,7 @@
 
 from setuptools import setup, find_packages
 from os import path
+from sys import platform
 import termslides
 
 
@@ -38,6 +39,12 @@ setup(
         'Programming Language :: Python :: 3',
         'Topic :: Text Processing :: Markup',
     ],
+
+    package_data={
+        'termslides': [
+            'lib/*.jar',
+        ],
+    },
 
     entry_points={
         'console_scripts': [

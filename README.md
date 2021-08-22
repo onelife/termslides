@@ -1,5 +1,5 @@
 # TermSlides
-Script your slides in YAML file and show it in terminal.
+Script your slides in YAML and show it in terminal.
 
 ## Install
 `pip install termslides`
@@ -17,6 +17,7 @@ title: TermSlides Example
 Diagram:
   notes: This is an example
   startAnimation: scroll
+  pageAnimation: stars
   endAnimation: matrix
   content:
     - type: text
@@ -28,17 +29,18 @@ Diagram:
       x: 2
 ```
 
-At the top level, `title` is reserved keyword. Its value will be set as the title of currnt terminal window. The rest of key-value pairs are treated as slide name-content pairs.
+At the top level, `title` is reserved keyword. Its value will be set as the title of current terminal window. The rest of key-value pairs are treated as slide name-content pairs.
 
-The slide content is another key-value pairs. `content` is compulsory. The following are optional.
+The slide content is another set of key-value pairs. `content` key is compulsory and the following are optional:
 - `notes`: Notes for current slide which is shown in *slides list mode*.
-- `duration`: The time in frames before switching to next slide. There are 20 frames per second.
+- `duration`: The show time in frames before switching to next slide. The frame rate is 20 frames/second.
 - `startAnimation`: Slide starting animation. `scroll` only.
-- `endAnimation`: Slide ending animation. `scroll` or `matrix`.
-- `star`: A whole screen effect. The value is number of stars.
-- `snow`: A whole screen effect. Set value to `true` to enable.
+- `endAnimation`: Slide ending animation. `scroll`, `matrix`, `shoot`, `drop` or `wipe`.
+- `pageAnimation`: The animation between starting and ending. `stars`, `snow`, `explosion`, `fireworks` or `rain`.
 
-The value of `content` is yet another key-value pairs. `type` and `content` are compulsory. Following are the available `type`s.
+The value of `content` is yet another set of key-value pairs. `type` and `content` are common compulsory keys.
+
+### Available `type`s:
 - `text`: Text, the most common type.
   - Other compulsory attributes:
     - None
@@ -90,6 +92,22 @@ The value of `content` is yet another key-value pairs. `type` and `content` are 
     - `x`: Same as `text`.
     - `attr`: Same as `text`.
     - `bg`: Same as `text`.
+
+- `image`: Grey scale ascii text image
+  - Other compulsory attributes:
+    - None
+  - Optional attributes:
+    - `height`: Target image height
+    - `y`: Same as `text`.
+    - `x`: Same as `text`.
+
+- `color-image`: Block color image
+  - Other compulsory attributes:
+    - None
+  - Optional attributes:
+    - `height`: Target image height
+    - `y`: Same as `text`.
+    - `x`: Same as `text`.
 
 ## Key Binding
 - Slides List Mode

@@ -5,14 +5,13 @@ from types import MethodType
 
 import yaml
 from asciimatics.exceptions import NextScene, ResizeScreenError, StopApplication
-from asciimatics.effects import Stars, Snow
 from asciimatics.scene import Scene
 from asciimatics.screen import Screen
 from click import group, argument
 
 from termslides.widgets import (
     InvalidParameter, InputHandler, TitleView, SlideView, NoteView, ListView,
-    _get_effects, _valid_start, _valid_end
+    _get_effects, _valid_start, _valid_end, _valid_page
 )
 
 __all__ = ['termslides']
@@ -109,6 +108,8 @@ def cli():
 @cli.command()
 @argument('file')
 def termslides(file):
+    from tqdm import tqdm
+
     with open(file, 'r') as stream:
         slides = yaml.full_load(stream)
 
@@ -126,29 +127,27 @@ def termslides(file):
             [title_view, notes_view, slide_view, list_view], -1, name="__slides_list__"))
 
         # slides
-        for name, slide in slides.items():
+        progress = tqdm(slides.items())
+        progress.set_description('Loading slides')
+        for name, slide in progress:
             # get slide content
             content = slide.get('content', None)
             if content is None:
                 raise InvalidParameter(f"Page {name} no 'content'")
             # get slide duration
             duration = slide.get('duration', -1)
-            # get starting / ending animation
+            # get starting / ending / page animation
             start = slide.get('startAnimation', None)
             if start not in _valid_start:
                 raise InvalidParameter(f'Invalid starting animation: {start}')
             end = slide.get('endAnimation', None)
             if end not in _valid_end:
                 raise InvalidParameter(f'Invalid ending animation: {end}')
+            page = slide.get('pageAnimation', None)
+            if page not in _valid_page:
+                raise InvalidParameter(f'Invalid page animation: {page}')
             # get slide effects
-            effects = _get_effects(screen, content, start, end)
-            # get slide animation
-            stars = slide.get('stars', None)
-            if stars:
-                effects.insert(0, Stars(screen, stars))
-            snow = slide.get('snow', False)
-            if snow:
-                effects.insert(0, Snow(screen))
+            effects = _get_effects(screen, content, start, end, page)
             # input handler
             effects.insert(0, InputHandler(screen, list_view))
             # add to scenes

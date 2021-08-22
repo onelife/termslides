@@ -5,7 +5,7 @@ from os import path
 
 __author__ = 'onelife'
 __license__ = "Apache-2.0"
-__version__ = '1.02'
+__version__ = '1.10'
 
 __setup = False
 __depth = 1
